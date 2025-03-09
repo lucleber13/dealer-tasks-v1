@@ -67,7 +67,7 @@ public class User implements Serializable {
     @LastModifiedBy
     private String lastModifiedBy;
 
-    @Column(name = "reset_token")
+    @Column(name = "reset_token", length = 512)
     private String resetToken;
 
     @Column(name = "reset_token_expiration")

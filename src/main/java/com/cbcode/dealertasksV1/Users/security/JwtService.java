@@ -1,8 +1,10 @@
 package com.cbcode.dealertasksV1.Users.security;
 
+import io.jsonwebtoken.Claims;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Map;
+import java.util.function.Function;
 
 public interface JwtService {
 
@@ -15,4 +17,6 @@ public interface JwtService {
     boolean isTokenExpired(String token);
 
     String generateRefreshToken(Map<String, Object> claims, UserDetails userDetails);
+
+   String getTokenType(String token);
 }

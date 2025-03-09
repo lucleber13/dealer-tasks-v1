@@ -1,5 +1,6 @@
 package com.cbcode.dealertasksV1.Users.model.DTOs;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
@@ -8,25 +9,21 @@ import java.util.Set;
 
 public class UserDto {
     private Long id;
-    @Email(message = "Invalid email format")
-    private String email;
-    private String password;
-    private Set<RoleDto> roles;
     @NotBlank(message = "First name is required")
     private String firstName;
     @NotBlank(message = "Last name is required")
     private String lastName;
+    @Email(message = "Invalid email format")
+    private String email;
+    @JsonIgnore
+    private String password;
+    private Set<RoleDto> roles;
+
 
     public UserDto() {
     }
 
-    public UserDto(String email, String password, Set<RoleDto> roles, String firstName, String lastName) {
-        this.email = email;
-        this.password = password;
-        this.roles = roles;
-        this.firstName = firstName;
-        this.lastName = lastName;
-    }
+    public UserDto(Long id, String firstName, String lastName, String email, String password, Set<RoleDto> roles) {}
 
     public Long getId() {
         return id;
@@ -80,15 +77,15 @@ public class UserDto {
     public boolean equals(Object o) {
         if (!(o instanceof UserDto userDto)) return false;
         return Objects.equals(id, userDto.id)
+                && Objects.equals(firstName, userDto.firstName)
+                && Objects.equals(lastName, userDto.lastName)
                 && Objects.equals(email, userDto.email)
                 && Objects.equals(password, userDto.password)
-                && Objects.equals(roles, userDto.roles)
-                && Objects.equals(firstName, userDto.firstName)
-                && Objects.equals(lastName, userDto.lastName);
+                && Objects.equals(roles, userDto.roles);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, email, password, roles, firstName, lastName);
+        return Objects.hash(id, firstName, lastName, email, password, roles);
     }
 }

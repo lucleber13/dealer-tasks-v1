@@ -61,25 +61,22 @@ public class SecurityConfig {
         logger.info("Creating security filter chain");
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                // TODO: remove this line when deploying to production
-                //.cors(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers("/auth/**").permitAll()
-                                // TODO: Restrict in production
-                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html/**").permitAll()
                                 .requestMatchers("/cars/users/**").hasAnyRole("ADMIN", "SALES", "WORKSHOP", "VALETER")
                                 .requestMatchers("/cars/**").hasAnyRole("ADMIN", "SALES")
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                                .requestMatchers("/users/**").hasAnyRole( "SALES", "WORKSHOP", "VALETER")
+                                .requestMatchers("/users/**").hasAnyRole("SALES", "WORKSHOP", "VALETER")
                                 .requestMatchers("/workshop/**").hasAnyRole("ADMIN", "WORKSHOP")
                                 .requestMatchers("/valet/**").hasAnyRole("ADMIN", "VALETER")
                                 .requestMatchers("/tasks/**").hasAnyRole("ADMIN", "SALES")
+                                // TODO: Remove in production
+                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html/**").permitAll()
                                 .anyRequest().authenticated())
                 .sessionManagement(sessionManagement ->
-                        sessionManagement
-                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -95,13 +92,13 @@ public class SecurityConfig {
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Allow specific origins
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE")); // Allow specific methods
-        configuration.setAllowedHeaders(List.of("*")); // Allow all headers
-        configuration.setAllowCredentials(true); // Allow credentials
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:3000")); // Update for production
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Apply to all endpoints
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 

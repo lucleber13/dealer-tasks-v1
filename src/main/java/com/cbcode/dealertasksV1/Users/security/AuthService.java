@@ -1,7 +1,7 @@
 package com.cbcode.dealertasksV1.Users.security;
 
-import com.cbcode.dealertasksV1.Users.model.DTOs.UserDto;
 import com.cbcode.dealertasksV1.Users.security.DTOs.Request.LoginRequest;
+import com.cbcode.dealertasksV1.Users.security.DTOs.Request.PasswordResetDto;
 import com.cbcode.dealertasksV1.Users.security.DTOs.Request.RefreshTokenRequest;
 import com.cbcode.dealertasksV1.Users.security.DTOs.Response.JwtAuthResponse;
 
@@ -11,11 +11,9 @@ public interface AuthService {
 
     JwtAuthResponse refreshToken(RefreshTokenRequest refreshTokenRequest);
 
-    void logout();
+    PasswordResetDto forgotPassword(String email);
 
-    UserDto forgotPassword(String email);
-
-    UserDto validateResetToken(String token);
+    PasswordResetDto validateResetToken(String token);
 
     void resetPassword(String token, String newPassword);
 }

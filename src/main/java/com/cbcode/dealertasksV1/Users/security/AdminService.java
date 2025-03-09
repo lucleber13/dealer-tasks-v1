@@ -4,6 +4,7 @@ import com.cbcode.dealertasksV1.Users.model.DTOs.UserDto;
 import com.cbcode.dealertasksV1.Users.model.Role;
 import com.cbcode.dealertasksV1.Users.security.DTOs.Request.SignUpRequest;
 import com.cbcode.dealertasksV1.Users.security.DTOs.Request.UserUpdateRequest;
+import com.cbcode.dealertasksV1.Users.security.DTOs.Response.UserDeletionResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -14,7 +15,7 @@ public interface AdminService {
     UserDto getUserById(Long id);
     Page<UserDto> getAllUsers(Pageable pageable);
     void updateUser(Long id, UserUpdateRequest userUpdateRequest);
-    void deleteUser(Long id);
+    UserDeletionResponse deleteUser(Long id);
     // Update the Role of a User by ID and Role ID
     UserDto updateUserRole(Long id, Set<Role> roleNames);
 }

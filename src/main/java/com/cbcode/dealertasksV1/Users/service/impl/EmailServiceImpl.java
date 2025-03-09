@@ -56,9 +56,10 @@ public class EmailServiceImpl implements EmailService {
             message.setTo(toEmail);
             message.setSubject("Password Reset Request");
             message.setText("To reset your password, click the link below:\n\n" +
-                    "https://yourdomain.com/reset-password?token=" + resetLink + "\n\n" +
+                    // TODO: Update the reset link to point to the frontend reset password page
+                    "http://localhost:8080/api/v1/auth/reset-password?token=" + resetLink + "\n\n" +
                     "If you didn't request a password reset, please ignore this email.\n\n" +
-                    "This link will expire in 30 minutes.");
+                    "This link will expire in 15 minutes.");
             mailSender.send(message);
         } catch (MailException e) {
             logger.error("Failed to send email ", e);

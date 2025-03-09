@@ -154,8 +154,21 @@ public class JwtServiceImpl implements JwtService {
     }
 
     /**
+     * The getTokenType method is used to extract the token type from the JWT token.
+     * The method extracts the token type claim from the token using the extractClaim method.
+     *
+     * @param token - The JWT token from which to extract the token type.
+     * @return - The token type extracted from the JWT token.
+     */
+    @Override
+    public String getTokenType(String token) {
+        return extractClaim(token, claims -> claims.get("token_type", String.class));
+    }
+
+    /**
      * The extractExpiration method is used to extract the expiration date from the JWT token.
      * The method extracts the expiration claim from the token using the extractClaim method.
+     *
      * @param token - The JWT token from which to extract the expiration date.
      * @return - The expiration date extracted from the JWT token.
      */

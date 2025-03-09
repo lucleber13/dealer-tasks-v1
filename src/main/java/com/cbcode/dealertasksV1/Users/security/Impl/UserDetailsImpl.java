@@ -1,6 +1,7 @@
 package com.cbcode.dealertasksV1.Users.security.Impl;
 
 import com.cbcode.dealertasksV1.Users.model.User;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,7 +14,7 @@ public class UserDetailsImpl implements UserDetails {
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(User user) {
+    public UserDetailsImpl(@NotNull User user) {
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.authorities = user.getRoles()

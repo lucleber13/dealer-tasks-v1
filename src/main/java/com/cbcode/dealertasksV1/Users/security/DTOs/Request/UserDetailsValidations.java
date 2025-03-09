@@ -46,6 +46,14 @@ public class UserDetailsValidations {
         if (userUpdateRequest.password() != null) validatePassword(userUpdateRequest.password());
     }
 
+    public void validate(String email) {
+        validateEmail(email);
+    }
+
+    public void validate(@NotNull RefreshTokenRequest refreshTokenRequest) {
+        validateRefreshToken(refreshTokenRequest.refreshToken());
+    }
+
     private void validateFirstName(String firstName) {
         if (firstName == null || firstName.isBlank()) {
             logger.error("First name cannot be null or empty");
@@ -94,4 +102,10 @@ public class UserDetailsValidations {
         }
     }
 
+    private void validateRefreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            logger.error("Refresh token cannot be null or empty");
+            throw new IllegalArgumentException("Refresh token is null or empty");
+        }
+    }
 }

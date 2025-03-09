@@ -1,4 +1,8 @@
 package com.cbcode.dealertasksV1.Users.security.DTOs.Request;
 
-public record UserUpdateRequest(String firstName, String lastName, String email, String password) {
+import com.cbcode.dealertasksV1.Users.model.Role;
+
+import java.util.Set;
+
+public record UserUpdateRequest(String firstName, String lastName, String email, String password, Set<Role> roles) {
 }
