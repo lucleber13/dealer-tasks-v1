@@ -13,7 +13,7 @@ public interface AuthService {
 
     PasswordResetDto forgotPassword(String email);
 
-    PasswordResetDto validateResetToken(String token);
+    PasswordResetDto validateAndInvalidateResetToken(String token);
 
     void resetPassword(String token, String newPassword);
 }

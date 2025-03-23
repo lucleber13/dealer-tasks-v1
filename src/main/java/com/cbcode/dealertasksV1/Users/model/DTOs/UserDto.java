@@ -19,11 +19,17 @@ public class UserDto {
     private String password;
     private Set<RoleDto> roles;
 
-
     public UserDto() {
     }
 
-    public UserDto(Long id, String firstName, String lastName, String email, String password, Set<RoleDto> roles) {}
+    public UserDto(Long id, String firstName, String lastName, String email, String password, Set<RoleDto> roles) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+        this.roles = roles;
+    }
 
     public Long getId() {
         return id;
@@ -31,6 +37,22 @@ public class UserDto {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getEmail() {
@@ -55,22 +77,6 @@ public class UserDto {
 
     public void setRoles(Set<RoleDto> roles) {
         this.roles = roles;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
     }
 
     @Override

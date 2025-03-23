@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-
 @Entity
 @Table(name = "users")
 @SequenceGenerator(name = "users_seq", sequenceName = "users_seq", allocationSize = 1, initialValue = 2)
@@ -101,16 +100,25 @@ public class User implements Serializable {
         return firstName;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setFirstName(@org.jetbrains.annotations.NotNull String firstName) {
+        this.firstName = firstName.toUpperCase().charAt(0) + firstName.substring(1).toLowerCase();
     }
 
     public String getLastName() {
         return lastName;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setLastName(@org.jetbrains.annotations.NotNull String lastName) {
+        String[] names = lastName.split(" ");
+        if (names.length > 1) {
+            StringBuilder lastNameBuilder = new StringBuilder();
+            for (String name : names) {
+                lastNameBuilder.append(name.toUpperCase().charAt(0)).append(name.substring(1).toLowerCase()).append(" ");
+            }
+            this.lastName = lastNameBuilder.toString().trim();
+            return;
+        }
+        this.lastName = lastName.toUpperCase().charAt(0) + lastName.substring(1).toLowerCase();
     }
 
     public String getEmail() {
@@ -174,7 +182,8 @@ public class User implements Serializable {
     }
 
     public void setRoles(Set<Role> roles) {
-        this.roles = roles;
+        this.roles.clear();
+        this.roles.addAll(roles);
     }
 
     @Override

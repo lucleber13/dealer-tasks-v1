@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -36,11 +35,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      * If a valid token is found, the user is authenticated and added to the security context.
      * If the token is invalid, the security context is cleared.
      * If no token is found, the request is passed to the next filter in the chain.
-     * @param request - The request object.
-     * @param response - The response object.
+     *
+     * @param request     - The request object.
+     * @param response    - The response object.
      * @param filterChain - The filter chain object.
      * @throws ServletException - If an error occurs during the filter process.
-     * @throws IOException - If an error occurs during the filter process.
+     * @throws IOException      - If an error occurs during the filter process.
      */
     @Override
     protected void doFilterInternal(

@@ -2,10 +2,9 @@ package com.cbcode.dealertasksV1.Users.security.DTOs.Request;
 
 import com.cbcode.dealertasksV1.ExceptionsConfig.PasswordTooShortException;
 import com.cbcode.dealertasksV1.ExceptionsConfig.RoleNotFoundException;
-import com.cbcode.dealertasksV1.ExceptionsConfig.UserAlreadyExistsException;
 import com.cbcode.dealertasksV1.ExceptionsConfig.UserNotFoundException;
+import com.cbcode.dealertasksV1.Users.model.DTOs.UserDto;
 import com.cbcode.dealertasksV1.Users.model.Role;
-import com.cbcode.dealertasksV1.Users.repository.UserRepository;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +19,6 @@ public class UserDetailsValidations {
     private static final Logger logger = LoggerFactory.getLogger(UserDetailsValidations.class);
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
     private static final Integer MIN_PASSWORD_LENGTH = 8;
-    private final UserRepository userRepository;
-
-    public UserDetailsValidations(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     public void validate(@NotNull LoginRequest loginRequest) {
         validateEmail(loginRequest.email());
@@ -39,11 +33,11 @@ public class UserDetailsValidations {
         validateRole(signUpRequest.roles());
     }
 
-    public void validate(@NotNull UserUpdateRequest userUpdateRequest) {
-        if (userUpdateRequest.firstName() != null) validateFirstName(userUpdateRequest.firstName());
-        if (userUpdateRequest.lastName() != null) validateLastName(userUpdateRequest.lastName());
-        if (userUpdateRequest.email() != null) validateEmail(userUpdateRequest.email());
-        if (userUpdateRequest.password() != null) validatePassword(userUpdateRequest.password());
+    public void validate(@NotNull UserDto userDto) {
+        if (userDto.getFirstName() != null) validateFirstName(userDto.getFirstName());
+        if (userDto.getLastName() != null) validateLastName(userDto.getLastName());
+        if (userDto.getEmail() != null) validateEmail(userDto.getEmail());
+        if (userDto.getPassword() != null) validatePassword(userDto.getPassword());
     }
 
     public void validate(String email) {
@@ -88,7 +82,7 @@ public class UserDetailsValidations {
             logger.error("Password must be at least {} characters long", MIN_PASSWORD_LENGTH);
             throw new PasswordTooShortException("Password must be at least " + MIN_PASSWORD_LENGTH + " characters long");
         }
-        //        TODO: Remove the comment below after implementing the password pattern validation
+        //        TODO: Remove the commented line below after implementing the password pattern validation
 //        if (!PASSWORD_PATTERN.matcher(password).matches()) {
 //            logger.error("Password does not meet the requirements: {}", password);
 //            throw new PasswordTooShortException("Password does not meet the requirements. Password must contain at least one digit, one lowercase letter, one uppercase letter, one special character and no whitespace.");
