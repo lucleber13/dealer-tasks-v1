@@ -12,6 +12,9 @@ src/main/resources/data.sql
 # Ignore compose.yaml
 compose.yaml
 
+# Ignore .env file
+.env
+
 ### STS ###
 .apt_generated
 .classpath

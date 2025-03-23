@@ -32,6 +32,7 @@
         <modelmapper.version>3.2.2</modelmapper.version>
         <jjwt.version>0.12.6</jjwt.version>
         <guava.version>33.4.0-jre</guava.version>
+        <dotenv.version>3.2.0</dotenv.version>
     </properties>
     <dependencies>
         <dependency>
@@ -117,6 +118,12 @@
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>${dotenv.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>
