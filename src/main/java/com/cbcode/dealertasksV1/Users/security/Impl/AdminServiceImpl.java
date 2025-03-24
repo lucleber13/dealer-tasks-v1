@@ -82,8 +82,8 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public void createUser(@NotNull SignUpRequest signUpRequest) {
         try {
-            //ValidationUtil.validateEmail(signUpRequest.email());
-            checkAdminAuthorization();
+            ValidationUtil.validateEmail(signUpRequest.email());
+            verifyAdminAccess();
             checkEmailAvailability(signUpRequest.email());
             userDetailsValidations.validate(signUpRequest);
 
@@ -93,6 +93,10 @@ public class AdminServiceImpl implements AdminService {
         } catch (Exception e) {
             handleUserCreationErrors(e, signUpRequest.email());
         }
+    }
+
+    private void handlePostUserCreation(User savedUser) {
+        // sendWelcomeEmailAsync(savedUser);
     }
 
     /**
@@ -105,21 +109,38 @@ public class AdminServiceImpl implements AdminService {
      * - AccessDeniedException if there is no authentication available or
      * the user does not have the required admin role.
      */
-    private void checkAdminAuthorization() {
-        Authentication authentication = Optional.ofNullable(SecurityContextHolder.getContext())
-                .map(SecurityContext::getAuthentication)
-                .orElseThrow(() -> new AccessDeniedException("No authentication available"));
+    private void verifyAdminAccess() {
+        Authentication authentication = getAuthentication();
 
         // Check if the user has ROLE_ADMIN authority
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(grantedAuthority -> ROLE_ADMIN.equals(grantedAuthority.getAuthority()));
 
         if (!isAdmin) {
+            logger.warn("Non-admin attempted to create user: {}", authentication.getName());
             throw new AccessDeniedException("Only Admins can perform this operation");
         }
 
-        logger.info("Admin authorization successful for user: {}", authentication.getName());
+        logger.debug("Admin authorization successful for user: {}", authentication.getName());
 
+    }
+
+    /**
+     * Retrieves the current authentication object from the security context.
+     * This method ensures that an authentication object is present and throws
+     * an exception if it cannot be found.
+     *
+     * @return the current {@link Authentication} object, never null
+     * @throws OperationNotPermittedException if no authentication context is available
+     */
+    private @NotNull Authentication getAuthentication() {
+        return Optional.ofNullable(SecurityContextHolder.getContext())
+                .map(SecurityContext::getAuthentication)
+                .filter(Authentication::isAuthenticated)
+                .orElseThrow(() -> {
+                    logger.error("No authentication context available");
+                    return new AccessDeniedException("User is not authenticated");
+                });
     }
 
     /**
@@ -130,11 +151,10 @@ public class AdminServiceImpl implements AdminService {
      * @param email the email address to check for availability
      */
     private void checkEmailAvailability(String email) {
-        if (!userRepository.existsByEmail(email)) {
-            return;
+        if (userRepository.existsByEmail(email)) {
+            logger.error("User with email {} already exists!", email);
+            throw new UserAlreadyExistsException("User with email " + email + " already exists!");
         }
-        logger.error("User with email {} already exists!", email);
-        throw new UserAlreadyExistsException("User with email " + email + " already exists!");
     }
 
     /**
@@ -181,17 +201,6 @@ public class AdminServiceImpl implements AdminService {
     }
 
     /**
-     * Handles post-user creation operations such as logging and triggering additional actions.
-     *
-     * @param savedUser the User object that has just been created and saved
-     * @param email     the email address associated with the newly created user
-     */
-    private void handlePostUserCreation(User savedUser, String email) {
-        logger.info("User with email {} created!", email);
-        // sendWelcomeEmailAsync(savedUser);
-    }
-
-    /**
      * Handles errors encountered during the user creation process and logs appropriate messages.
      * Converts specific exceptions into a custom UserCreationException for consistent error handling.
      *
@@ -223,53 +232,16 @@ public class AdminServiceImpl implements AdminService {
         logger.info("Attempting to fetch user with ID: {}", id);
 
         ValidationUtil.validateId(id, ACTION_FETCH);
-        ensureAdminPrivileges(getAuthentication());
+        verifyAdminAccess();
 
         try {
-            User user = retrieveUserById(id);
+            User user = findUserById(id);
             logger.info("Successfully retrieved user with ID: {}", id);
             return mapUserToDto(user);
         } catch (DataAccessException e) {
             logger.error("Failed to fetch user with ID: {} due to a database error {}", id, e.getMessage());
             throw new UserRetrievalException("Database error occurred while fetching user details.");
         }
-    }
-
-    /**
-     * Validates whether the current user has administrative privileges.
-     * If the user does not have admin privileges, a warning is logged, and an exception is thrown.
-     *
-     * @param auth the authentication object containing the user's credentials and roles
-     */
-    private void ensureAdminPrivileges(Authentication auth) {
-        verifyRole(auth, ROLE_ADMIN, "Admin privileges required");
-    }
-
-    /**
-     * Retrieves the current authentication object from the security context.
-     * This method ensures that an authentication object is present and throws
-     * an exception if it cannot be found.
-     *
-     * @return the current {@link Authentication} object, never null
-     * @throws OperationNotPermittedException if no authentication context is available
-     */
-    private @NotNull Authentication getAuthentication() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            logger.error("Authentication is null");
-            throw new AccessDeniedException("AUser is not authenticated");
-        }
-        return authentication;
-    }
-
-    /**
-     * Retrieves a User entity based on the provided user ID.
-     *
-     * @param id the unique identifier of the user to be retrieved
-     * @return the User entity corresponding to the given ID, or null if the user is not found
-     */
-    private User retrieveUserById(Long id) {
-        return findUserById(id);
     }
 
     /**
@@ -302,61 +274,9 @@ public class AdminServiceImpl implements AdminService {
         try {
             return modelMapper.map(user, UserDto.class);
         } catch (MappingException e) {
-            logMappingError(user, e);
+            logger.error("Mapping error for user ID: {}", user.getId(), e);
             throw new UserMappingException("Failed to map user to DTO", e);
         }
-    }
-
-    /**
-     * Logs an error encountered during the mapping operation for a specific user.
-     *
-     * @param user the User object associated with the mapping error, can be null
-     * @param e    the Exception that occurred during the mapping operation
-     */
-    private void logMappingError(User user, Exception e) {
-        logger.error("Mapping error for user ID: {}", user != null ? user.getId() : "null", e);
-    }
-
-    /**
-     * General method to verify if a user has a specific role. Logs a warning and throws an exception if not.
-     *
-     * @param auth         the authentication object to check
-     * @param role         the role to validate
-     * @param errorMessage the message to use in the exception
-     */
-    private void verifyRole(Authentication auth, String role, String errorMessage) {
-        if (!hasRole(auth, role)) {
-            logger.warn("Non-{} attempted to delete user with role {}", role + ": " + auth.getName(), errorMessage);
-            throw new OperationNotPermittedException(errorMessage);
-        }
-    }
-
-    /**
-     * Checks if the given authentication object has the specified role.
-     *
-     * @param auth the authentication object to check, which may contain user authorities
-     * @param role the role to verify existence for within the user's authorities
-     * @return true if the user associated with the provided authentication has the specified role,
-     * false otherwise or if the authentication object is null
-     */
-    private boolean hasRole(Authentication auth, String role) {
-        if (auth == null) {
-            return false;
-        }
-        return auth.getAuthorities().stream()
-                .anyMatch(authority -> hasAuthority(authority, role));
-    }
-
-    /**
-     * Determines if the given authority matches the specified role.
-     *
-     * @param authority the GrantedAuthority object to check, must not be null
-     * @param role      the role to compare with the authority's granted role, can be null
-     * @return true if the authority's granted role matches the specified role, otherwise false
-     */
-    @Contract("_, null -> false")
-    private boolean hasAuthority(@NotNull GrantedAuthority authority, String role) {
-        return authority.getAuthority().equals(role);
     }
 
     /**
@@ -371,7 +291,7 @@ public class AdminServiceImpl implements AdminService {
     public Page<UserDto> getAllUsers(Pageable pageable) {
         logger.info("Attempting to fetch all users");
         validatePageable(pageable);
-        ensureAdminPrivileges(getAuthentication());
+        verifyAdminAccess();
 
         try {
             Page<User> userPage = userRepository.findAll(pageable);
@@ -402,35 +322,17 @@ public class AdminServiceImpl implements AdminService {
             logger.error("Pageable is null");
             throw new IllegalArgumentException("Pagination parameters cannot be null");
         }
-
-        validateCondition(pageable.getPageSize() <= 0,
-                "Invalid page size: %d",
-                pageable.getPageSize(),
-                "Page size must be a positive number");
-
-        validateCondition(pageable.getPageSize() > maxPageSize,
-                "Page size too large: %d",
-                pageable.getPageSize(),
-                String.format("Page size too large: %d", maxPageSize));
-
-        validateCondition(pageable.getPageNumber() < 0,
-                "Invalid page number: %d",
-                pageable.getPageNumber(),
-                "Page number must be a positive number");
-    }
-
-    /**
-     * Validates a given condition and performs logging and exception throwing if the condition is true.
-     *
-     * @param condition         the condition to be evaluated
-     * @param logMessagePattern the message pattern to be logged if the condition is true
-     * @param logArgument       the argument to be included in the log message
-     * @param exceptionMessage  the message for the IllegalArgumentException to be thrown if the condition is true
-     */
-    private void validateCondition(boolean condition, String logMessagePattern, Object logArgument, String exceptionMessage) {
-        if (condition) {
-            logger.error(logMessagePattern, logArgument);
-            throw new IllegalArgumentException(exceptionMessage);
+        if (pageable.getPageSize() <= 0) {
+            logger.error("Invalid page size: {}", pageable.getPageSize());
+            throw new IllegalArgumentException("Page size must be a positive number");
+        }
+        if (pageable.getPageSize() > maxPageSize) {
+            logger.error("Page size exceeds maximum allowed: {}", pageable.getPageSize());
+            throw new IllegalArgumentException("Page size exceeds maximum allowed");
+        }
+        if (pageable.getPageNumber() < 0) {
+            logger.error("Invalid page number: {}", pageable.getPageNumber());
+            throw new IllegalArgumentException("Page number must be a positive number");
         }
     }
 
@@ -445,47 +347,18 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackOn = Exception.class)
     public void updateUser(Long id, UserDto userDto) {
-        validateUserInput(id, userDto);
         logger.info("Attempting to update user with ID: {}", id);
-        ensureAdminPrivileges(getAuthentication());
-        executeUserUpdate(id, userDto);
-    }
 
-    /**
-     * Validates the user input by checking the provided id and userDto.
-     *
-     * @param id      the unique identifier of the user to be validated
-     * @param userDto the data transfer object containing user information to be validated
-     */
-    private void validateUserInput(Long id, UserDto userDto) {
         ValidationUtil.validateId(id, "update");
-        validateUserDto(id, userDto);
-    }
-
-    /**
-     * Validates the UserDto object to ensure it is not null.
-     *
-     * @param id      the unique identifier of the user being validated
-     * @param userDto the UserDto object to be validated
-     * @throws IllegalArgumentException if the userDto is null
-     */
-    private void validateUserDto(Long id, UserDto userDto) {
         if (userDto == null) {
             logger.error("User DTO cannot be null for update ID: {}", id);
             throw new IllegalArgumentException("User details are required");
         }
-    }
 
-    /**
-     * Executes the update process for a user by retrieving and validating the user,
-     * updating their fields, and persisting the changes to the database.
-     *
-     * @param id      the unique identifier of the user to be updated
-     * @param userDto the data transfer object containing updated user information
-     */
-    private void executeUserUpdate(Long id, UserDto userDto) {
+        verifyAdminAccess();
         try {
-            User user = fetchAndValidateUserForUpdate(id, userDto);
+            User user = findUserById(id);
+            validateUpdateRestrictions(user, userDto);
             updateUserFields(user, userDto);
             userRepository.save(user);
             logger.debug("User with ID: {} updated successfully", id);
@@ -493,20 +366,6 @@ public class AdminServiceImpl implements AdminService {
             logger.error("Database constraint violation while updating user with ID: {}", id, e);
             throw new UserUpdateException("Failed to update user due to database error!" + e.getMessage());
         }
-    }
-
-    /**
-     * Fetches a user by the provided ID and validates the user based on update restrictions.
-     *
-     * @param id      the ID of the user to fetch
-     * @param userDto the data transfer object containing the update details
-     * @return the fetched and validated user
-     */
-    private @NotNull User fetchAndValidateUserForUpdate(Long id, UserDto userDto) {
-        User user = findUserById(id);
-        logger.debug("Found user: {} for update", user.getEmail());
-        validateUpdateRestrictions(user, userDto);
-        return user;
     }
 
     /**
@@ -520,7 +379,7 @@ public class AdminServiceImpl implements AdminService {
     private void validateUpdateRestrictions(@NotNull User user, @NotNull UserDto userDto) {
         if (!userDto.getEmail().equals(user.getEmail())) {
             logger.warn("Attempt to change email from {} to {}", user.getEmail(), userDto.getEmail());
-            throw new OperationNotPermittedException("Email updates not allowed");
+            throw new OperationNotPermittedException("Email updates not allowed through this method");
         }
 //        if (!Objects.deepEquals(userDto.roles(), user.getRoles())) {
 //            logger.warn("Attempt to modify roles via user update for {}", user.getEmail());
@@ -538,46 +397,13 @@ public class AdminServiceImpl implements AdminService {
      * @param userDto the UserDto object containing the new values for the User fields
      */
     private void updateUserFields(@NotNull User user, @NotNull UserDto userDto) {
-        updateBasicUserInfo(user, userDto);
-        if (isPasswordUpdateNeeded(userDto)) {
+        user.setFirstName(userDto.getFirstName());
+        user.setLastName(userDto.getLastName());
+
+        if (userDto.getPassword() != null && !userDto.getPassword().trim().isEmpty()) {
             validateAndUpdatePassword(user, userDto);
         }
         user.setUpdatedAt(LocalDateTime.now());
-    }
-
-    /**
-     * Updates the basic user information by setting the first name and last
-     * name from the provided UserDto object to the target User object.
-     *
-     * @param user    the target User object where the first name and last name
-     *                will be updated
-     * @param userDto the source UserDto object containing the new first name
-     *                and last name values
-     */
-    private void updateBasicUserInfo(@NotNull User user, @NotNull UserDto userDto) {
-        user.setFirstName(userDto.getFirstName());
-        user.setLastName(userDto.getLastName());
-    }
-
-    /**
-     * Determines if a password update is needed for a given user.
-     *
-     * @param userDto The user data transfer object containing user information. Must not be null.
-     * @return True if the user's password update is needed, false otherwise.
-     */
-    private boolean isPasswordUpdateNeeded(@NotNull UserDto userDto) {
-        return isPasswordValid(userDto);
-    }
-
-    /**
-     * Validates if the password within the provided UserDto object is valid.
-     * A valid password is not null and is not an empty or whitespace-only string.
-     *
-     * @param userDto the UserDto object containing the password to validate. Must not be null.
-     * @return true if the password is not null and not empty after trimming; false otherwise.
-     */
-    private boolean isPasswordValid(@NotNull UserDto userDto) {
-        return userDto.getPassword() != null && !userDto.getPassword().trim().isEmpty();
     }
 
     /**
@@ -634,12 +460,10 @@ public class AdminServiceImpl implements AdminService {
         ValidationUtil.validateId(id, "Delete");
         logger.info("Attempting to delete user with ID: {}", id);
 
-        Authentication auth = getAuthentication();
-        ensureAdminPrivileges(auth);
-
+        verifyAdminAccess();
         try {
             User user = findUserById(id);
-            ensureUserDeletionPermitted(user, auth);
+            ensureUserDeletionPermitted(user);
             userRepository.delete(user);
             logger.info("User {} with ID: {} deleted successfully", user.getEmail(), id);
         } catch (DataAccessException e) {
@@ -652,13 +476,11 @@ public class AdminServiceImpl implements AdminService {
      * Ensures that the provided user is permitted to be deleted.
      *
      * @param user the user to check
-     * @param auth the authentication object
      */
-    private void ensureUserDeletionPermitted(@NotNull User user, Authentication auth) {
-        user.getRoles().forEach(role -> System.out.println("Role: " + role.getName()));
-
+    private void ensureUserDeletionPermitted(@NotNull User user) {
         boolean isAdmin = user.getRoles().stream()
                 .anyMatch(role -> "ROLE_ADMIN".equalsIgnoreCase(role.getName().name()));
+
         if (isAdmin) {
             logger.warn("Deletion of admin users is not permitted");
             throw new OperationNotPermittedException("Deletion of admin users is not permitted");
@@ -680,42 +502,30 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackOn = Exception.class)
     public void updateUserRole(Long id, Set<Role> roleNames) {
-        try {
-            validateRoles(id, roleNames);
-            ensureAdminPrivileges(getAuthentication());
-            logger.info("Attempting to update user role with ID: {}", id);
+        logger.info("Attempting to update user role with ID: {}", id);
 
+        ValidationUtil.validateId(id, "role update");
+        if (roleNames == null || roleNames.isEmpty()) {
+            logger.error("Role names cannot be null or empty for ID: {}", id);
+            throw new IllegalArgumentException("At least one role must be provided");
+        }
+
+        verifyAdminAccess();
+
+        try {
             User user = findUserById(id);
             logger.debug("Found user: {} for role update", user.getEmail());
 
             Set<Role> roles = validateAndFetchRoles(roleNames);
-            setUserRoles(user, roles);
+            user.setRoles(roles);
+            user.setUpdatedAt(LocalDateTime.now());
 
-            User updatedUser = userRepository.save(user);
-            logger.info("User roles updated successfully: {}", updatedUser.getEmail());
+            userRepository.save(user);
+            logger.info("User roles updated successfully: {}", user.getEmail());
         } catch (DataAccessException e) {
             logger.error("Database constraint violation while updating user role with ID: {}", id, e);
             throw new UserUpdateException("Failed to update user role due to database error!" + e.getMessage());
         }
-    }
-
-    /**
-     * Validates the provided roles for the specified ID.
-     *
-     * @param id        The unique identifier associated with the roles.
-     * @param roleNames The set of roles to be validated. Must not be null or empty.
-     * @throws IllegalArgumentException if the provided roles are null or empty.
-     */
-    private void validateRoles(Long id, Set<Role> roleNames) {
-        ValidationUtil.validateId(id, "role update");
-        if (isNullOrEmpty(roleNames)) {
-            logger.error("Role names cannot be null or empty for ID: {}", id);
-            throw new IllegalArgumentException("At least one role must be provided");
-        }
-    }
-
-    private boolean isNullOrEmpty(Set<Role> roles) {
-        return roles == null || roles.isEmpty();
     }
 
     /**
@@ -743,26 +553,14 @@ public class AdminServiceImpl implements AdminService {
      */
     private Role fetchRoleByIdOrName(@NotNull Role role) {
         if (role.getId() == null) {
-            logger.warn("Role not found: {}", role.getName());
             return roleRepository.findByName(role.getName())
                     .orElseThrow(() ->
                             new RoleNotFoundException("Role not found: " + role.getName()));
         }
 
-        logger.warn("Role not found with ID: {}", role.getId());
         return roleRepository.findById(role.getId())
                 .orElseThrow(() ->
                         new RoleNotFoundException("Role not found with ID: " + role.getId()));
-    }
-
-    /**
-     * Assigns a set of roles to the specified user.
-     *
-     * @param user  the user to whom roles are being assigned. Must not be null.
-     * @param roles the set of roles to assign to the user.
-     */
-    private void setUserRoles(@NotNull User user, Set<Role> roles) {
-        user.setRoles(roles);
     }
 
     /**
@@ -780,61 +578,27 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackOn = Exception.class)
     public void updateUserEmail(Long userId, String email) {
-        validateInputs(userId, email);
         logger.info("Attempting to update email for user with ID: {}", userId);
 
-        ensureAdminPrivileges(getAuthentication());
-
-        User user = findUserById(userId);
-        if (user.getEmail().equals(email)) {
-            logger.warn("No change in email for user with ID: {}", userId);
-            return;
-        }
-        updateEmailAndSave(userId, email, user);
-    }
-
-    /**
-     * Validates the provided inputs for the email update process.
-     *
-     * @param id    the unique identifier to be validated
-     * @param email the email address to be validated
-     */
-    private void validateInputs(Long id, String email) {
-        ValidationUtil.validateId(id, "email update");
+        ValidationUtil.validateId(userId, "email update");
         ValidationUtil.validateEmail(email);
-    }
 
-    /**
-     * Validates the provided email address for null or empty input
-     * and checks if it matches the required email format.
-     *
-     * @param email the email address to validate
-     * @throws IllegalArgumentException if the email is null, empty, or does not match the expected format
-     */
-    private void validateEmail(String email) {
-        ValidationUtil.validateEmail(email);
-    }
+        verifyAdminAccess();
 
-    /**
-     * Updates the email address of a user and saves the changes to the database.
-     * The email availability is checked before performing the update.
-     * If the process fails, an exception is logged and a UserUpdateException is thrown.
-     *
-     * @param id    the unique identifier of the user whose email is being updated
-     * @param email the new email address to update for the user
-     * @param user  the user object representing the user to be updated; must not be null
-     * @throws UserUpdateException if there is an error during the update or database operation
-     */
-    private void updateEmailAndSave(Long id, String email, @NotNull User user) {
         try {
+            User user = findUserById(userId);
+            if (user.getEmail().equals(email)) {
+                logger.warn("No change in email for user with ID: {}", userId);
+                return;
+            }
             checkEmailAvailability(email);
             user.setEmail(email);
             user.setUpdatedAt(LocalDateTime.now());
 
             userRepository.save(user);
-            logger.info("User email updated successfully for ID: {}", id);
+            logger.info("User email updated successfully for ID: {}", userId);
         } catch (DataAccessException e) {
-            logger.error("Database error while updating email for user with ID: {}", id, e);
+            logger.error("Database error while updating email for user with ID: {}", userId, e);
             throw new UserUpdateException("Failed to update email due to database error: " + e.getMessage());
         }
     }
@@ -876,7 +640,7 @@ public class AdminServiceImpl implements AdminService {
      * @throws UserNotFoundException if no user is found with the specified email
      */
     private User findUserByEmail(String email) {
-        validateEmail(email);
+        ValidationUtil.validateEmail(email);
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> {
                     logger.warn("User not found with email: {}", email);
