@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      POSTGRES_DB: ${DOCKER_DATABASE}
+      POSTGRES_PASSWORD: ${DOCKER_PASSWORD}
+      POSTGRES_USER: ${DOCKER_USER}
+    ports:
+      - "${DOCKER_PORT}:5432"
+
+    expose:
+      - '5432'
