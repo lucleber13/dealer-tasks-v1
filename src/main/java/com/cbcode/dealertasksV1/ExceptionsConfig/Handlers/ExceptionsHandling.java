@@ -2,19 +2,18 @@ package com.cbcode.dealertasksV1.ExceptionsConfig.Handlers;
 
 import com.cbcode.dealertasksV1.ExceptionsConfig.*;
 import com.cbcode.dealertasksV1.Users.security.DTOs.Response.ErrorResponse;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import org.jetbrains.annotations.NotNull;
-import org.springframework.web.context.request.WebRequest;
 
 @RestControllerAdvice
 public class ExceptionsHandling {
@@ -38,7 +37,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, WebRequest request) {
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(@NotNull MethodArgumentNotValidException ex, WebRequest request) {
         String errorMessage = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -50,7 +49,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(@NotNull IllegalArgumentException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Invalid argument",
                 "INVALID_INPUT",
@@ -63,7 +62,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserNotFoundException(@NotNull UserNotFoundException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Not found",
                 "USER_NOT_FOUND",
@@ -76,7 +75,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(UserAlreadyExistsException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserAlreadyExistsException(@NotNull UserAlreadyExistsException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Conflict",
                 "USER_ALREADY_EXISTS",
@@ -89,7 +88,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(RoleNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleRoleNotFoundException(RoleNotFoundException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleRoleNotFoundException(@NotNull RoleNotFoundException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Not found",
                 "ROLE_NOT_FOUND",
@@ -102,7 +101,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(PasswordTooShortException.class)
-    public ResponseEntity<ErrorResponse> handlePasswordTooShortException(PasswordTooShortException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handlePasswordTooShortException(@NotNull PasswordTooShortException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Invalid password",
                 "PASSWORD_TOO_SHORT",
@@ -115,7 +114,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(UserCreationException.class)
-    public ResponseEntity<ErrorResponse> handleUserCreationException(UserCreationException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserCreationException(@NotNull UserCreationException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Creation failed",
                 "USER_CREATION_ERROR",
@@ -128,7 +127,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidTokenException(InvalidTokenException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleInvalidTokenException(@NotNull InvalidTokenException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Invalid token",
                 "INVALID_TOKEN",
@@ -141,7 +140,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(TokenExpiredException.class)
-    public ResponseEntity<ErrorResponse> handleTokenExpiredException(TokenExpiredException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleTokenExpiredException(@NotNull TokenExpiredException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Token expired",
                 "TOKEN_EXPIRED",
@@ -154,7 +153,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<ErrorResponse> handleRateLimitExceededException(RateLimitExceededException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleRateLimitExceededException(@NotNull RateLimitExceededException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Too many requests",
                 "RATE_LIMIT_EXCEEDED",
@@ -167,7 +166,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(UserRetrievalException.class)
-    public ResponseEntity<ErrorResponse> handleUserRetrievalException(UserRetrievalException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserRetrievalException(@NotNull UserRetrievalException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Retrieval failed",
                 "USER_RETRIEVAL_ERROR",
@@ -180,7 +179,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(UserMappingException.class)
-    public ResponseEntity<ErrorResponse> handleUserMappingException(UserMappingException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserMappingException(@NotNull UserMappingException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Mapping failed",
                 "USER_MAPPING_ERROR",
@@ -193,7 +192,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(OperationNotPermittedException.class)
-    public ResponseEntity<ErrorResponse> handleOperationNotPermittedException(OperationNotPermittedException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleOperationNotPermittedException(@NotNull OperationNotPermittedException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Forbidden",
                 "OPERATION_NOT_PERMITTED",
@@ -206,7 +205,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(UserUpdateException.class)
-    public ResponseEntity<ErrorResponse> handleUserUpdateException(UserUpdateException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserUpdateException(@NotNull UserUpdateException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Update failed",
                 "USER_UPDATE_ERROR",
@@ -219,7 +218,7 @@ public class ExceptionsHandling {
     }
 
     @ExceptionHandler(UserDeletionException.class)
-    public ResponseEntity<ErrorResponse> handleUserDeletionException(UserDeletionException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleUserDeletionException(@NotNull UserDeletionException ex, @NotNull WebRequest request) {
         ErrorResponse response = new ErrorResponse(
                 "Deletion failed",
                 "USER_DELETION_ERROR",
@@ -231,4 +230,29 @@ public class ExceptionsHandling {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(CarAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCarAlreadyExistsException(@NotNull CarAlreadyExistsException ex, @NotNull WebRequest request) {
+        ErrorResponse response = new ErrorResponse(
+                "Conflict",
+                "CAR_ALREADY_EXISTS",
+                ex.getMessage(),
+                HttpStatus.CONFLICT.toString(),
+                Instant.now().toString(),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(CarMappingException.class)
+    public ResponseEntity<ErrorResponse> handleCarMappingException(@NotNull CarMappingException ex, @NotNull WebRequest request) {
+        ErrorResponse response = new ErrorResponse(
+                "Mapping failed",
+                "CAR_MAPPING_ERROR",
+                ex.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR.toString(),
+                Instant.now().toString(),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
 }

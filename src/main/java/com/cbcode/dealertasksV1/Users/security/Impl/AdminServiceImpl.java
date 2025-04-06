@@ -12,7 +12,6 @@ import com.cbcode.dealertasksV1.Users.security.DTOs.Request.UserDetailsValidatio
 import com.cbcode.dealertasksV1.Users.service.EmailService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.modelmapper.MappingException;
 import org.modelmapper.ModelMapper;
@@ -26,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -89,7 +87,7 @@ public class AdminServiceImpl implements AdminService {
 
             User user = createAndSaveUser(signUpRequest, mapRoles(signUpRequest.roles()));
             logger.info("User with email {} created: ", signUpRequest.email());
-            // handlePostUserCreation(user, signUpRequest.email());
+            // handlePostUserCreation(user, signUpRequest.email()); // Uncommenting the method call to send an email.
         } catch (Exception e) {
             handleUserCreationErrors(e, signUpRequest.email());
         }

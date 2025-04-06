@@ -206,6 +206,23 @@ public class User implements Serializable {
     public int hashCode() {
         return Objects.hash(id, firstName, lastName, email, password, createdAt, updatedAt, lastModifiedBy, resetToken, resetTokenExpiration, roles);
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                ", lastModifiedBy='" + lastModifiedBy + '\'' +
+                ", resetToken='" + resetToken + '\'' +
+                ", resetTokenExpiration=" + resetTokenExpiration +
+                ", roles=" + roles +
+                '}';
+    }
 }
 
 

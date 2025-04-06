@@ -11,16 +11,16 @@ import java.util.Properties;
 @Configuration
 public class EmailConfig {
 
-    @Value("${spring.mail.host}")
+    @Value("${SPRING_MAIL_HOST}")
     private String mailHost;
 
-    @Value("${spring.mail.port}")
+    @Value("${SPRING_MAIL_PORT}")
     private String mailPort;
 
-    @Value("${spring.mail.username}")
+    @Value("${SPRING_MAIL_USERNAME}")
     private String mailUsername;
 
-    @Value("${spring.mail.password}")
+    @Value("${SPRING_MAIL_PASSWORD}")
     private String mailPassword;
 
     /**
@@ -28,6 +28,7 @@ public class EmailConfig {
      * The mail server settings are read from the application.yaml file.
      * Any changes to the mail server settings should be done in the application.yaml file.
      * The mail server settings are used to send emails to the users when they reset their password.
+     *
      * @return JavaMailSender object with the mail server settings.
      */
     @Bean

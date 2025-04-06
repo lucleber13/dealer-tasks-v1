@@ -9,7 +9,7 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "roles")
-@SequenceGenerator(name = "roles_seq", sequenceName = "roles_seq", allocationSize = 1, initialValue = 1)
+@SequenceGenerator(name = "roles_seq", sequenceName = "roles_seq", allocationSize = 1)
 public class Role implements Serializable {
 
     @Serial

@@ -5,8 +5,6 @@ target/
 !**/src/test/**/target/
 
 # Ignore application.yaml and application-dev.yaml and data.sql
-src/main/resources/application.yaml
-src/main/resources/application-dev.yaml
 src/main/resources/data.sql
 
 # Ignore compose.yaml
