@@ -7,9 +7,6 @@ target/
 # Ignore application.yaml and application-dev.yaml and data.sql
 src/main/resources/data.sql
 
-# Ignore compose.yaml
-compose.yaml
-
 # Ignore .env file
 .env
 
